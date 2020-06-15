@@ -13,8 +13,8 @@ jobs:
       - uses: actions/setup-java@v1
         with:
           java-version: 14
-      - run: chmod +x gradlew
-      - run: ./gradlew build
+      - run: chmod +x mvnw
+      - run: ./mvnw clean install
       - uses: akhileshns/heroku-deploy@v3.0.4 # This is the action
         with:
           heroku_api_key: ${{secrets.HEROKU_API_KEY}}
