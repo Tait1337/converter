@@ -34,7 +34,7 @@ No Tests exist.
 
 ## Deployment
 
-The most basic option to run the Application is as Dockerimage with included Web Server and required convertion apps.
+The most basic option to run the Application is as Dockerimage with included Web Server and required convertion programs.
 
 ### Built and run as Dockerimage
 
@@ -59,10 +59,10 @@ We use [GitHub](https://github.com/) for versioning. For the versions available,
 
 ## License
 
-This project is licensed under the Apache License 2.0 - see the [LICENSE.md](LICENSE) file for details
+This project is licensed under the Apache License 2.0 - see the [LICENSE.md](LICENSE) file for details.
 
 ## Acknowledgments
 
-* FFmpeg - the cross-platform solution to record, convert and stream audio and video FFmpeg
-* Youtube-dl - a command-line program to download videos from YouTube.com and a few more sites
+* Youtube-dl - the command-line program to download videos from YouTube.com and a few [more sites](http://ytdl-org.github.io/youtube-dl/supportedsites.html)
+* FFmpeg - the cross-platform solution to record, convert and stream audio and video
 * Photographer of Background Photos from Pexels
