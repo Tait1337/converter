@@ -11,6 +11,9 @@ import java.io.InputStreamReader;
 import java.net.URL;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 
 /**
  * Handles conversion of online videos with third party libs.
@@ -26,27 +29,50 @@ public class ConverterService {
     private Logger log = LoggerFactory.getLogger(ConverterService.class);
     private LocalDateTime lastUpdated = null;
 
+    private static Map<String, File> convertionQueue = new HashMap();
+
     /**
      * Extract audio of given online video
      *
      * @param url the video url
      * @return the audio file (as mp3)
      */
-    public File convertToMp3(URL url) throws IOException, InterruptedException {
+    public String convertToMp3(URL url) {
+        String ticket = UUID.randomUUID().toString();
+        convertionQueue.put(ticket, null);
         String[] options = {youtube_dl_path, "--extract-audio", "--audio-format mp3", "--audio-quality 192k", "--add-metadata"};
-        return convert(url, options);
+
+        new Thread(() -> {
+            try {
+                convert(ticket, url, options);
+            } catch (Exception e) {
+                log.error("Convertion error.", e);
+            }
+        }).start();
+
+        return ticket;
+    }
+
+    /**
+     * Get the converted file that is related to the given ticket
+     *
+     * @param ticket the conversion ticket
+     * @return the converted file or <code>null</code>
+     */
+    public File getFile(String ticket){
+        return convertionQueue.get(ticket);
     }
 
     /**
      * Convert a online video to target format
      *
+     * @param ticket the conversion ticket
      * @param url     the video url
      * @param options the conerter options
-     * @return the converted file
      * @throws IOException          on any execution error
      * @throws InterruptedException on any execution error
      */
-    private File convert(URL url, String[] options) throws IOException, InterruptedException {
+    private void convert(String ticket, URL url, String[] options) throws IOException, InterruptedException {
         // update youtube and FFmpeg app when TTL is reached
         if (lastUpdated == null || lastUpdated.isBefore(LocalDateTime.now().minusHours(TTL_IN_HOURS))) {
             updateFFmpeg();
@@ -79,7 +105,7 @@ public class ConverterService {
             }
         }
 
-        return outputFile.toFile();
+        convertionQueue.put(ticket, outputFile.toFile());
     }
 
     /**
