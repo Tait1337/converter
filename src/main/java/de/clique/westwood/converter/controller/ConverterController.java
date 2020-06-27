@@ -40,6 +40,18 @@ public class ConverterController {
     }
 
     /**
+     * Convert a given video (url) to mp4
+     *
+     * @param url the video url to convert
+     * @return the conversion ticket
+     */
+    @PostMapping("/convertToMp4")
+    public String convertToMp4(String url) throws MalformedURLException {
+        return service.convertToMp4(new URL(url));
+    }
+
+
+    /**
      * Check the conversion status of a given ticket
      *
      * @param ticket the conversion ticket

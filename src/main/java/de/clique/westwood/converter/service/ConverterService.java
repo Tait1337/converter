@@ -54,6 +54,28 @@ public class ConverterService {
     }
 
     /**
+     * Extract video of given online video
+     *
+     * @param url the video url
+     * @return the video file (as mp4)
+     */
+    public String convertToMp4(URL url) {
+        String ticket = UUID.randomUUID().toString();
+        convertionQueue.put(ticket, null);
+        String[] options = {youtube_dl_path, "-f", "\"bestvideo[height<=?1080]+bestaudio/best\"", "bestvideo[height<=?1080]+bestaudio/best", "--recode-video", "mp4", "--add-metadata"};
+
+        new Thread(() -> {
+            try {
+                convert(ticket, url, options);
+            } catch (Exception e) {
+                log.error("Convertion error.", e);
+            }
+        }).start();
+
+        return ticket;
+    }
+
+    /**
      * Get the converted file that is related to the given ticket
      *
      * @param ticket the conversion ticket

@@ -113,7 +113,8 @@
 <main>
     <form>
         <input type="url" name="url" id="url" placeholder="https://youtu.be/4Rc-NGWEHdU" required/>
-        <button type="submit">mp3</button>
+        <button type="submit" name="convertToMp3">mp3</button>
+        <button type="submit" name="convertToMp4">mp4</button>
     </form>
     <br/>
     <table id="tickets" aria-describedby="converted files">
@@ -164,9 +165,14 @@
                 $('body').css('background-image', 'url(img/' + images[random] + ')');
             };
 
+            $('button[type="submit"]').on('click', function(){
+                  $('form').data('button', this.name);
+            });
+
             $("form").submit(function(e) {
                 e.preventDefault();
-                jQuery.post('convertToMp3', $(this).serialize(), function(ticket) {
+                var url = $(this).data('button') || $('input[type="submit"]').get(0).name;
+                jQuery.post(url, $(this).serialize(), function(ticket) {
                   $('#tickets').append(`
                     <tr>
                         <td>`+$('#url').val()+`</td>
