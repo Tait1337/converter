@@ -62,7 +62,7 @@ public class ConverterService {
     public String convertToMp4(URL url) {
         String ticket = UUID.randomUUID().toString();
         convertionQueue.put(ticket, null);
-        String[] options = {youtube_dl_path, "-f", "\"bestvideo[height<=?1080]+bestaudio/best\"", "bestvideo[height<=?1080]+bestaudio/best", "--recode-video", "mp4", "--add-metadata"};
+        String[] options = {youtube_dl_path, "--recode-video", "mp4", "--add-metadata"};
 
         new Thread(() -> {
             try {
@@ -121,8 +121,8 @@ public class ConverterService {
             String line;
             while ((line = reader.readLine()) != null) {
                 System.out.println(line);
-                if (line.startsWith("[ffmpeg] Destination: ")) {
-                    outputFile = Path.of(line.substring("[ffmpeg] Destination: ".length()));
+                if (line.startsWith("[ffmpeg] Adding metadata to '")) {
+                    outputFile = Path.of(line.substring("[ffmpeg] Adding metadata to '".length(), line.length() - 1));
                 }
             }
         }
