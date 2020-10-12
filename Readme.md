@@ -63,6 +63,6 @@ This project is licensed under the Apache License 2.0 - see the [LICENSE.md](LIC
 
 ## Acknowledgments
 
-* Youtube-dl - the command-line program to download videos from YouTube.com and a few [more sites](http://ytdl-org.github.io/youtube-dl/supportedsites.html)
-* FFmpeg - the cross-platform solution to record, convert and stream audio and video
-* Photographer of Background Photos from Pexels
+* [Youtube-dl](https://youtube-dl.org/) - the command-line program to download videos from [YouTube.com](https://www.youtube.com/) and a few [more sites](http://ytdl-org.github.io/youtube-dl/supportedsites.html)
+* [FFmpeg](https://ffmpeg.org/) - the cross-platform solution to record, convert and stream audio and video
+* Photographer of Background Photos from [Pexels](https://www.pexels.com/)
