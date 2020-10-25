@@ -61,6 +61,8 @@ We use [GitHub](https://github.com/) for versioning. For the versions available,
 
 This project is licensed under the Apache License 2.0 - see the [LICENSE.md](LICENSE) file for details.
 
+Please note that according to [§ 53 Absatz 1 UrhG](http://www.gesetze-im-internet.de/urhg/__53.html), creating copies are only allowed for private, non-commercial use. The regulations may differ in country and Streaming Platform.
+
 ## Acknowledgments
 
 * [Youtube-dl](https://youtube-dl.org/) - the command-line program to download videos from [YouTube.com](https://www.youtube.com/) and a few [more sites](http://ytdl-org.github.io/youtube-dl/supportedsites.html)
