@@ -1,7 +1,7 @@
 # converter
 [![build status](https://github.com/Tait1337/converter/workflows/build/badge.svg)](https://github.com/Tait1337/converter/actions)
 [![quality gate status](https://sonarcloud.io/api/project_badges/measure?project=Tait1337_converter&metric=alert_status)](https://sonarcloud.io/dashboard?id=Tait1337_converter)
-[![license](https://img.shields.io/badge/license-Apache%20License%202.0-blue.svg?style=flat)](LICENSE)
+[![license](https://img.shields.io/github/license/Tait1337/converter)](LICENSE)
 
 Online YouTube2Mp3 converter. Download online videos as mp3 (audio) or mp4 (video).
 
