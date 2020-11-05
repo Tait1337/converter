@@ -61,7 +61,7 @@ We use [GitHub](https://github.com/) for versioning. For the versions available,
 
 This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
 
-Please note that according to [§ 53 Absatz 1 UrhG](http://www.gesetze-im-internet.de/urhg/__53.html), creating copies are only allowed for private, non-commercial use. The regulations may differ in country and Streaming Platform.
+Please note that according to [§ 53 Absatz 1 UrhG](http://www.gesetze-im-internet.de/urhg/__53.html), creating copies is only allowed for private, non-commercial use. The regulations may differ in country and Streaming Platform.
 
 ## Acknowledgments
 
