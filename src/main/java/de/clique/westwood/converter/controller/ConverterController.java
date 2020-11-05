@@ -55,15 +55,15 @@ public class ConverterController {
      * Check the conversion status of a given ticket
      *
      * @param ticket the conversion ticket
-     * @return true if convertion is complete, otherwise false
+     * @return <code>true</code> if convertion is complete, otherwise the completion status text
      */
     @GetMapping("/ticketStatus")
-    public boolean ticketStatus(String ticket) {
+    public String ticketStatus(String ticket) {
         File outputFile = service.getFile(ticket);
         if (outputFile == null) {
-            return false;
+            return service.getStatus(ticket);
         } else {
-            return true;
+            return String.valueOf(true);
         }
     }
 

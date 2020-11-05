@@ -1,5 +1,5 @@
 ############################################################################
-# Converter Web App served by ubuntu (851 MB)
+# Converter Web App served by ubuntu (932 MB)
 #
 # build from project root dir with: docker build -t converter:latest .
 # run with: docker run --env-file .env -p 8080:8080 -d converter:latest
@@ -20,8 +20,8 @@ RUN apt-get update && apt-get install -y python
 RUN curl -L https://yt-dl.org/downloads/latest/youtube-dl -o /usr/local/bin/youtube-dl && chmod a+rx /usr/local/bin/youtube-dl
 
 # install java
-RUN curl https://download.java.net/java/GA/jdk14/076bab302c7b4508975440c56f6cc26a/36/GPL/openjdk-14_linux-x64_bin.tar.gz | tar xz -C /usr/local/bin/
-ENV JAVA_HOME=/usr/local/bin/jdk-14
+RUN curl https://download.java.net/java/GA/jdk15.0.1/51f4f36ad4ef43e39d0dfdbaf6549e32/9/GPL/openjdk-15.0.1_linux-x64_bin.tar.gz | tar xz -C /usr/local/bin/
+ENV JAVA_HOME=/usr/local/bin/jdk-15.0.1
 ENV PATH $JAVA_HOME/bin:$PATH
 
 # App

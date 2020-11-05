@@ -4,11 +4,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.net.URL;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -30,6 +28,7 @@ public class ConverterService {
     private LocalDateTime lastUpdated = null;
 
     private static Map<String, File> convertionQueue = new HashMap();
+    private static Map<String, String> convertionQueueStatus = new HashMap();
 
     /**
      * Extract audio of given online video
@@ -40,6 +39,7 @@ public class ConverterService {
     public String convertToMp3(URL url) {
         String ticket = UUID.randomUUID().toString();
         convertionQueue.put(ticket, null);
+        convertionQueueStatus.put(ticket, "Please wait...");
         String[] options = {youtube_dl_path, "--extract-audio", "--audio-format mp3", "--audio-quality 192k", "--add-metadata"};
 
         new Thread(() -> {
@@ -62,6 +62,7 @@ public class ConverterService {
     public String convertToMp4(URL url) {
         String ticket = UUID.randomUUID().toString();
         convertionQueue.put(ticket, null);
+        convertionQueueStatus.put(ticket, "Please wait...");
         String[] options = {youtube_dl_path, "--recode-video", "mp4", "--add-metadata"};
 
         new Thread(() -> {
@@ -83,6 +84,16 @@ public class ConverterService {
      */
     public File getFile(String ticket){
         return convertionQueue.get(ticket);
+    }
+
+    /**
+     * Get the completion status for a conversion ticket
+     *
+     * @param ticket the conversion ticket
+     * @return the completion status as text
+     */
+    public String getStatus(String ticket){
+        return convertionQueueStatus.get(ticket);
     }
 
     /**
@@ -111,8 +122,44 @@ public class ConverterService {
         String cmd = String.join(" ", allOptions);
         Process process = runCmd(cmd);
 
+        // stream to frontend
+        Thread logWatcher = new Thread(() ->
+        {
+            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            String line = null;
+            while (true) {
+                try {
+                    if ((line = reader.readLine()) == null) break;
+                } catch (IOException e) {
+                    log.warn("Error while reading FFmpeg output", e);
+                }
+                log.info(line);
+                if (line.contains("[download]") && line.contains("%")){
+                    String downloadPercentageAsString = line.substring("[download]".length(), line.indexOf("%"));
+                    int downloadPercentage = (int) Double.parseDouble(downloadPercentageAsString);
+                    convertionQueueStatus.put(ticket, "Downloading..." + downloadPercentage + "%");
+                } else if (line.contains("[ffmpeg] Destination: ")){
+                    String outputfileAsString = line.substring("[ffmpeg] Destination: ".length());
+                    File outputfile = new File(outputfileAsString);
+                    while (true){
+                        long fileSizeInMB = 0;
+                        if (outputfile.exists()){
+                            fileSizeInMB = outputfile.length() / 1024 / 1024;
+                        }
+                        convertionQueueStatus.put(ticket, "Converting..." + fileSizeInMB + "MB");
+                        try {
+                            Thread.sleep(2500);
+                        } catch (InterruptedException e) {}
+                    }
+                }
+            }
+        });
+        logWatcher.start();
+
         int exitCode = process.waitFor();
+        logWatcher.interrupt();
         if (exitCode != 0) {
+            convertionQueueStatus.put(ticket, "Error. Please try again.");
             throw new InterruptedException("Error while downloading and converting video file.");
         }
 
@@ -120,7 +167,6 @@ public class ConverterService {
         try (var reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
             String line;
             while ((line = reader.readLine()) != null) {
-                System.out.println(line);
                 if (line.startsWith("[ffmpeg] Adding metadata to '")) {
                     outputFile = Path.of(line.substring("[ffmpeg] Adding metadata to '".length(), line.length() - 1));
                 }
@@ -128,6 +174,7 @@ public class ConverterService {
         }
 
         convertionQueue.put(ticket, outputFile.toFile());
+        convertionQueueStatus.put(ticket, "Done");
     }
 
     /**
@@ -172,8 +219,8 @@ public class ConverterService {
         ProcessBuilder builder = new ProcessBuilder();
         builder.command("/bin/bash", "-c", cmd);
         builder.directory(new File(tmp_path));
-        builder.redirectOutput(ProcessBuilder.Redirect.PIPE);
-        builder.redirectError(ProcessBuilder.Redirect.INHERIT);
+        builder.redirectErrorStream(true);
         return builder.start();
     }
+
 }

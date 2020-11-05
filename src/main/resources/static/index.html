@@ -186,11 +186,14 @@
 
             ticketReadyCheck = function(ticket){
                 jQuery.get('ticketStatus', {ticket: ticket}, function(status) {
-                    if (status === true){
+                    if (status === `true`){
                         $('#'+ticket).html(`
                           <a href="download?ticket=`+ticket+`">Download</a>
                         `);
                     }else {
+                        $('#'+ticket).html(`
+                         `+status+`
+                        `);
                        setTimeout(function() {ticketReadyCheck(ticket)}, 10000);
                     }
                 });
