@@ -14,16 +14,10 @@ jobs:
         with:
           java-version: 15
       - run: mvn -B package --file pom.xml
-      - uses: sonarsource/sonarcloud-github-action@master
+      - run: mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        with:
-          args: >
-            -Dsonar.organization=tait1337
-            -Dsonar.projectKey=Tait1337_converter
-            -Dsonar.host.url=https://sonarcloud.io
-            -Dsonar.verbose=true
       - uses: akhileshns/heroku-deploy@v3.0.4 # This is the action
         with:
           heroku_api_key: ${{secrets.HEROKU_API_KEY}}
