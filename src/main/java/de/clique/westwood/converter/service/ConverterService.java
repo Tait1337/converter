@@ -149,7 +149,10 @@ public class ConverterService {
                         convertionQueueStatus.put(ticket, "Converting..." + fileSizeInMB + "MB");
                         try {
                             Thread.sleep(2500);
-                        } catch (InterruptedException e) {}
+                        } catch (InterruptedException e) {
+                            log.warn("Thread was interrupted", e);
+                            Thread.currentThread().interrupt();
+                        }
                     }
                 }
             }
