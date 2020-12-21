@@ -6,7 +6,6 @@ import org.springframework.stereotype.Service;
 
 import java.io.*;
 import java.net.URL;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -19,16 +18,17 @@ import java.util.UUID;
 @Service
 public class ConverterService {
 
-    private final long TTL_IN_HOURS = 24;
-    private final String tmp_path = System.getProperty("java.io.tmpdir");
-    private final String youtube_dl_path = "/usr/local/bin/youtube-dl";
-    private final String ffmpeg_path = "/usr/bin/ffmpeg";
+    private final static Logger LOGGER = LoggerFactory.getLogger(ConverterService.class);
 
-    private Logger log = LoggerFactory.getLogger(ConverterService.class);
-    private LocalDateTime lastUpdated = null;
+    private final static long TTL_IN_HOURS = 24;
+    private final static String TMP_PATH = System.getProperty("java.io.tmpdir");
+    private final static String YOUTUBE_DL_PATH = "/usr/local/bin/youtube-dl";
+    private final static String FFMPEG_PATH = "/usr/bin/ffmpeg";
 
-    private static Map<String, File> convertionQueue = new HashMap();
-    private static Map<String, String> convertionQueueStatus = new HashMap();
+    private static final Map<String, File> conversionQueue = new HashMap<>();
+    private static final Map<String, String> conversionQueueStatus = new HashMap<>();
+
+    private static LocalDateTime LAST_UPDATED = null;
 
     /**
      * Extract audio of given online video
@@ -38,15 +38,15 @@ public class ConverterService {
      */
     public String convertToMp3(URL url) {
         String ticket = UUID.randomUUID().toString();
-        convertionQueue.put(ticket, null);
-        convertionQueueStatus.put(ticket, "Please wait...");
-        String[] options = {youtube_dl_path, "--extract-audio", "--audio-format mp3", "--audio-quality 192k", "--add-metadata"};
+        conversionQueue.put(ticket, null);
+        conversionQueueStatus.put(ticket, "Please wait...");
+        String[] options = {YOUTUBE_DL_PATH, "--extract-audio", "--audio-format mp3", "--audio-quality 192k", "--add-metadata"};
 
         new Thread(() -> {
             try {
                 convert(ticket, url, options);
             } catch (Exception e) {
-                log.error("Convertion error.", e);
+                LOGGER.error("Converter error.", e);
             }
         }).start();
 
@@ -61,15 +61,15 @@ public class ConverterService {
      */
     public String convertToMp4(URL url) {
         String ticket = UUID.randomUUID().toString();
-        convertionQueue.put(ticket, null);
-        convertionQueueStatus.put(ticket, "Please wait...");
-        String[] options = {youtube_dl_path, "--recode-video", "mp4", "--add-metadata"};
+        conversionQueue.put(ticket, null);
+        conversionQueueStatus.put(ticket, "Please wait...");
+        String[] options = {YOUTUBE_DL_PATH, "--recode-video", "mp4", "--add-metadata"};
 
         new Thread(() -> {
             try {
                 convert(ticket, url, options);
             } catch (Exception e) {
-                log.error("Convertion error.", e);
+                LOGGER.error("Converter error.", e);
             }
         }).start();
 
@@ -83,7 +83,7 @@ public class ConverterService {
      * @return the converted file or <code>null</code>
      */
     public File getFile(String ticket){
-        return convertionQueue.get(ticket);
+        return conversionQueue.get(ticket);
     }
 
     /**
@@ -93,7 +93,7 @@ public class ConverterService {
      * @return the completion status as text
      */
     public String getStatus(String ticket){
-        return convertionQueueStatus.get(ticket);
+        return conversionQueueStatus.get(ticket);
     }
 
     /**
@@ -101,83 +101,51 @@ public class ConverterService {
      *
      * @param ticket the conversion ticket
      * @param url     the video url
-     * @param options the conerter options
+     * @param options the converter options
      * @throws IOException          on any execution error
      * @throws InterruptedException on any execution error
      */
     private void convert(String ticket, URL url, String[] options) throws IOException, InterruptedException {
         // update youtube and FFmpeg app when TTL is reached
-        if (lastUpdated == null || lastUpdated.isBefore(LocalDateTime.now().minusHours(TTL_IN_HOURS))) {
+        if (LAST_UPDATED == null || LAST_UPDATED.isBefore(LocalDateTime.now().minusHours(TTL_IN_HOURS))) {
             updateFFmpeg();
             updateYouTubeDownloader();
         }
 
-        Path outputFile = Path.of(tmp_path + File.separatorChar + "%(title)s.%(ext)s");
-
-        String[] defaultOptions = {"--ffmpeg-location " + ffmpeg_path, "-o " + "\"" + outputFile + "\"", url.toString()};
+        // start converting
+        Path outputFile = Path.of(TMP_PATH + File.separatorChar + "%(title)s.%(ext)s");
+        String[] defaultOptions = {"--ffmpeg-location " + FFMPEG_PATH, "-o " + "\"" + outputFile + "\"", url.toString()};
         String[] allOptions = new String[options.length + defaultOptions.length];
         System.arraycopy(options, 0, allOptions, 0, options.length);
         System.arraycopy(defaultOptions, 0, allOptions, options.length, defaultOptions.length);
-
         String cmd = String.join(" ", allOptions);
-        Process process = runCmd(cmd);
+        Process ffmpegProcess = runCmd(cmd);
 
-        // stream to frontend
-        Thread logWatcher = new Thread(() ->
-        {
-            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-            String line = null;
-            while (true) {
-                try {
-                    if ((line = reader.readLine()) == null) break;
-                } catch (IOException e) {
-                    log.warn("Error while reading FFmpeg output", e);
-                }
-                log.info(line);
-                if (line.contains("[download]") && line.contains("%")){
-                    String downloadPercentageAsString = line.substring("[download]".length(), line.indexOf("%"));
-                    int downloadPercentage = (int) Double.parseDouble(downloadPercentageAsString);
-                    convertionQueueStatus.put(ticket, "Downloading..." + downloadPercentage + "%");
-                } else if (line.contains("[ffmpeg] Destination: ")){
-                    String outputfileAsString = line.substring("[ffmpeg] Destination: ".length());
-                    File outputfile = new File(outputfileAsString);
-                    while (true){
-                        long fileSizeInMB = 0;
-                        if (outputfile.exists()){
-                            fileSizeInMB = outputfile.length() / 1024 / 1024;
-                        }
-                        convertionQueueStatus.put(ticket, "Converting..." + fileSizeInMB + "MB");
-                        try {
-                            Thread.sleep(2500);
-                        } catch (InterruptedException e) {
-                            log.warn("Thread was interrupted", e);
-                            Thread.currentThread().interrupt();
-                        }
-                    }
-                }
-            }
-        });
-        logWatcher.start();
-
-        int exitCode = process.waitFor();
-        logWatcher.interrupt();
+        // update converting ticket status
+        FfmpegTicketStatusUpdater statusUpdateJob = new FfmpegTicketStatusUpdater(ticket, ffmpegProcess, conversionQueueStatus);
+        statusUpdateJob.start();
+        int exitCode = ffmpegProcess.waitFor();
+        statusUpdateJob.interrupt();
         if (exitCode != 0) {
-            convertionQueueStatus.put(ticket, "Error. Please try again.");
+            conversionQueueStatus.put(ticket, "Error. Please try again.");
             throw new InterruptedException("Error while downloading and converting video file.");
         }
 
         // extract output filename
-        try (var reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+        try (var reader = new BufferedReader(new InputStreamReader(ffmpegProcess.getInputStream()))) {
             String line;
             while ((line = reader.readLine()) != null) {
                 if (line.startsWith("[ffmpeg] Adding metadata to '")) {
                     outputFile = Path.of(line.substring("[ffmpeg] Adding metadata to '".length(), line.length() - 1));
                 }
             }
+        } catch (IOException e){
+            conversionQueueStatus.put(ticket, "Error. Please try again.");
+            throw new InterruptedException("Error while extracting output file.");
         }
 
-        convertionQueue.put(ticket, outputFile.toFile());
-        convertionQueueStatus.put(ticket, "Done");
+        conversionQueue.put(ticket, outputFile.toFile());
+        conversionQueueStatus.put(ticket, "Done");
     }
 
     /**
@@ -203,7 +171,7 @@ public class ConverterService {
      * @see {@link} https://yt-dl.org/
      */
     private void updateYouTubeDownloader() throws IOException, InterruptedException {
-        Process process = runCmd("curl -L https://yt-dl.org/downloads/latest/youtube-dl -o " + youtube_dl_path + " && chmod a+rx " + youtube_dl_path);
+        Process process = runCmd("curl -L https://yt-dl.org/downloads/latest/youtube-dl -o " + YOUTUBE_DL_PATH + " && chmod a+rx " + YOUTUBE_DL_PATH);
         int exitCode = process.waitFor();
         if (exitCode != 0) {
             throw new InterruptedException("Error while updating youtube dl.");
@@ -218,10 +186,10 @@ public class ConverterService {
      * @throws IOException on any execution error
      */
     private Process runCmd(String cmd) throws IOException {
-        log.debug("exec: " + cmd);
+        LOGGER.debug("exec: {}", cmd);
         ProcessBuilder builder = new ProcessBuilder();
         builder.command("/bin/bash", "-c", cmd);
-        builder.directory(new File(tmp_path));
+        builder.directory(new File(TMP_PATH));
         builder.redirectErrorStream(true);
         return builder.start();
     }

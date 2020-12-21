@@ -24,6 +24,10 @@ public class ConverterController {
 
     private ConverterService service;
 
+    /**
+     * Constructor
+     * @param service converter service
+     */
     public ConverterController(ConverterService service) {
         this.service = service;
     }
