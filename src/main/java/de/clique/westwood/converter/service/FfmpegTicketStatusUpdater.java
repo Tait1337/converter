@@ -15,9 +15,9 @@ import java.util.Map;
 public class FfmpegTicketStatusUpdater extends Thread {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(FfmpegTicketStatusUpdater.class);
-    private static final String downloadText = "[download]";
-    private static final String destinationText = "Destination: ";
-    private static final String metadataText = "[ffmpeg] Adding metadata to '";
+    private static final String DOWNLOAD_TEXT = "[download]";
+    private static final String DESTINATION_TEXT = "Destination: ";
+    private static final String METADATA_TEXT = "[ffmpeg] Adding metadata to '";
     private final String ticket;
     private final Process process;
     private final Map<String, String> conversionQueueStatus;
@@ -41,13 +41,13 @@ public class FfmpegTicketStatusUpdater extends Thread {
             String line;
             while ((line = reader.readLine()) != null) {
                 LOGGER.info(line);
-                if (line.contains(downloadText) && line.contains("%")){
+                if (line.contains(DOWNLOAD_TEXT) && line.contains("%")){
                     // extract download progress
-                    String downloadPercentage = line.substring(line.indexOf(downloadText) + downloadText.length(), line.indexOf("%"));
+                    String downloadPercentage = line.substring(line.indexOf(DOWNLOAD_TEXT) + DOWNLOAD_TEXT.length(), line.indexOf("%"));
                     conversionQueueStatus.put(ticket, "Downloading..." + downloadPercentage + "%");
-                } else if (line.contains("Destination: ") && !line.contains(downloadText)){
+                } else if (line.contains(DESTINATION_TEXT) && !line.contains(DOWNLOAD_TEXT)){
                     // extract conversion progress
-                    outputFile = Path.of(line.substring(line.indexOf(destinationText) + destinationText.length()));
+                    outputFile = Path.of(line.substring(line.indexOf(DESTINATION_TEXT) + DESTINATION_TEXT.length()));
                     long fileSizeInMB = 0;
                     while (process.isAlive()){
                         if (outputFile.toFile().exists()){
@@ -56,9 +56,9 @@ public class FfmpegTicketStatusUpdater extends Thread {
                         conversionQueueStatus.put(ticket, "Converting..." + fileSizeInMB + "MB");
                         Thread.sleep(2500);
                     }
-                } else if (line.startsWith(metadataText)) {
+                } else if (line.startsWith(METADATA_TEXT)) {
                     // extract output filename
-                    outputFile = Path.of(line.substring(metadataText.length(), line.length() - 1));
+                    outputFile = Path.of(line.substring(METADATA_TEXT.length(), line.length() - 1));
                     conversionQueueStatus.put(ticket, "Done");
                 }
             }
