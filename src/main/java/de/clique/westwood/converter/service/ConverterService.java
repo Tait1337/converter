@@ -125,28 +125,14 @@ public class ConverterService {
         // update converting ticket status
         FfmpegTicketStatusUpdater statusUpdateJob = new FfmpegTicketStatusUpdater(ticket, ffmpegProcess, conversionQueueStatus);
         statusUpdateJob.start();
-        int exitCode = ffmpegProcess.waitFor();
-        statusUpdateJob.interrupt();
-        if (exitCode != 0) {
-            conversionQueueStatus.put(ticket, "Error. Please try again.");
-            throw new InterruptedException("Error while downloading and converting video file.");
-        }
+        statusUpdateJob.join();
 
-        // extract output filename
-        try (var reader = new BufferedReader(new InputStreamReader(ffmpegProcess.getInputStream()))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                if (line.startsWith("[ffmpeg] Adding metadata to '")) {
-                    outputFile = Path.of(line.substring("[ffmpeg] Adding metadata to '".length(), line.length() - 1));
-                }
-            }
-        } catch (IOException e){
+        if (ffmpegProcess.exitValue() != 0) {
+            LOGGER.error("Error while downloading and converting video file.");
             conversionQueueStatus.put(ticket, "Error. Please try again.");
-            throw new InterruptedException("Error while extracting output file.");
+        }else{
+            conversionQueue.put(ticket, statusUpdateJob.getOutputFile().toFile());
         }
-
-        conversionQueue.put(ticket, outputFile.toFile());
-        conversionQueueStatus.put(ticket, "Done");
     }
 
     /**
