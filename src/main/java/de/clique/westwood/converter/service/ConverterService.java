@@ -24,11 +24,10 @@ public class ConverterService {
     private static final String TMP_PATH = System.getProperty("java.io.tmpdir");
     private static final String YOUTUBE_DL_PATH = "/usr/local/bin/youtube-dl";
     private static final String FFMPEG_PATH = "/usr/bin/ffmpeg";
+    private static final Map<String, File> conversionQueue = new HashMap<>();
+    private static final Map<String, String> conversionQueueStatus = new HashMap<>();
 
-    private final static Map<String, File> conversionQueue = new HashMap<>();
-    private final static Map<String, String> conversionQueueStatus = new HashMap<>();
-
-    private static LocalDateTime LAST_UPDATED = LocalDateTime.now();
+    private LocalDateTime lastUpdated = LocalDateTime.now();
 
     /**
      * Extract audio of given online video
@@ -107,10 +106,10 @@ public class ConverterService {
      */
     private void convert(String ticket, URL url, String[] options) throws IOException, InterruptedException {
         // update youtube and FFmpeg app when TTL is reached
-        if (LAST_UPDATED.isBefore(LocalDateTime.now().minusHours(TTL_IN_HOURS))) {
+        if (lastUpdated.isBefore(LocalDateTime.now().minusHours(TTL_IN_HOURS))) {
             updateFFmpeg();
             updateYouTubeDownloader();
-            LAST_UPDATED = LocalDateTime.now();
+            lastUpdated = LocalDateTime.now();
         }
 
         // start converting
