@@ -18,17 +18,17 @@ import java.util.UUID;
 @Service
 public class ConverterService {
 
-    private final static Logger LOGGER = LoggerFactory.getLogger(ConverterService.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ConverterService.class);
 
-    private final static long TTL_IN_HOURS = 24;
-    private final static String TMP_PATH = System.getProperty("java.io.tmpdir");
-    private final static String YOUTUBE_DL_PATH = "/usr/local/bin/youtube-dl";
-    private final static String FFMPEG_PATH = "/usr/bin/ffmpeg";
+    private static final long TTL_IN_HOURS = 24;
+    private static final String TMP_PATH = System.getProperty("java.io.tmpdir");
+    private static final String YOUTUBE_DL_PATH = "/usr/local/bin/youtube-dl";
+    private static final String FFMPEG_PATH = "/usr/bin/ffmpeg";
 
-    private static final Map<String, File> conversionQueue = new HashMap<>();
-    private static final Map<String, String> conversionQueueStatus = new HashMap<>();
+    private final static Map<String, File> conversionQueue = new HashMap<>();
+    private final static Map<String, String> conversionQueueStatus = new HashMap<>();
 
-    private static LocalDateTime LAST_UPDATED = null;
+    private static LocalDateTime LAST_UPDATED = LocalDateTime.now();
 
     /**
      * Extract audio of given online video
@@ -107,9 +107,10 @@ public class ConverterService {
      */
     private void convert(String ticket, URL url, String[] options) throws IOException, InterruptedException {
         // update youtube and FFmpeg app when TTL is reached
-        if (LAST_UPDATED == null || LAST_UPDATED.isBefore(LocalDateTime.now().minusHours(TTL_IN_HOURS))) {
+        if (LAST_UPDATED.isBefore(LocalDateTime.now().minusHours(TTL_IN_HOURS))) {
             updateFFmpeg();
             updateYouTubeDownloader();
+            LAST_UPDATED = LocalDateTime.now();
         }
 
         // start converting
@@ -153,7 +154,7 @@ public class ConverterService {
      *
      * @throws IOException          on any execution error
      * @throws InterruptedException on any execution error
-     * @see {@link} https://ffmpeg.org/
+     * @see <a href="https://ffmpeg.org/">FFMPEG webpage</a>
      */
     private void updateFFmpeg() throws IOException, InterruptedException {
         Process process = runCmd("apt-get update && apt-get install -y ffmpeg");
@@ -168,7 +169,7 @@ public class ConverterService {
      *
      * @throws IOException          on any execution error
      * @throws InterruptedException on any execution error
-     * @see {@link} https://yt-dl.org/
+     * @see <a href="https://yt-dl.org/">Youtube-dl webpage</a>
      */
     private void updateYouTubeDownloader() throws IOException, InterruptedException {
         Process process = runCmd("curl -L https://yt-dl.org/downloads/latest/youtube-dl -o " + YOUTUBE_DL_PATH + " && chmod a+rx " + YOUTUBE_DL_PATH);

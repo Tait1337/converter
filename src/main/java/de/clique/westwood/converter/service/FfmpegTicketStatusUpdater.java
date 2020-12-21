@@ -14,7 +14,7 @@ import java.util.Map;
  */
 public class FfmpegTicketStatusUpdater extends Thread {
 
-    private final static Logger LOGGER = LoggerFactory.getLogger(FfmpegTicketStatusUpdater.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(FfmpegTicketStatusUpdater.class);
     private final String ticket;
     private final Process process;
     private final Map<String, String> convertionQueueStatus;
@@ -34,34 +34,34 @@ public class FfmpegTicketStatusUpdater extends Thread {
     @Override
     public void run(){
         BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-        String line = null;
+        String line;
         while (true) {
             try {
                 if ((line = reader.readLine()) == null) break;
-            } catch (IOException e) {
-                LOGGER.warn("Error while reading FFmpeg output", e);
-            }
-            LOGGER.info(line);
-            if (line.contains("[download]") && line.contains("%")){
-                String downloadPercentageAsString = line.substring("[download]".length(), line.indexOf("%"));
-                int downloadPercentage = (int) Double.parseDouble(downloadPercentageAsString);
-                convertionQueueStatus.put(ticket, "Downloading..." + downloadPercentage + "%");
-            } else if (line.contains("[ffmpeg] Destination: ")){
-                String outputFileAsString = line.substring("[ffmpeg] Destination: ".length());
-                File outputFile = new File(outputFileAsString);
-                while (true){
-                    long fileSizeInMB = 0;
-                    if (outputFile.exists()){
-                        fileSizeInMB = outputFile.length() / 1024 / 1024;
-                    }
-                    convertionQueueStatus.put(ticket, "Converting..." + fileSizeInMB + "MB");
-                    try {
-                        Thread.sleep(2500);
-                    } catch (InterruptedException e) {
-                        LOGGER.warn("Thread was interrupted", e);
-                        Thread.currentThread().interrupt();
+                LOGGER.info(line);
+                if (line.contains("[download]") && line.contains("%")){
+                    String downloadPercentageAsString = line.substring("[download]".length(), line.indexOf("%"));
+                    int downloadPercentage = (int) Double.parseDouble(downloadPercentageAsString);
+                    convertionQueueStatus.put(ticket, "Downloading..." + downloadPercentage + "%");
+                } else if (line.contains("[ffmpeg] Destination: ")){
+                    String outputFileAsString = line.substring("[ffmpeg] Destination: ".length());
+                    File outputFile = new File(outputFileAsString);
+                    while (true){
+                        long fileSizeInMB = 0;
+                        if (outputFile.exists()){
+                            fileSizeInMB = outputFile.length() / 1024 / 1024;
+                        }
+                        convertionQueueStatus.put(ticket, "Converting..." + fileSizeInMB + "MB");
+                        try {
+                            Thread.sleep(2500);
+                        } catch (InterruptedException e) {
+                            LOGGER.warn("Thread was interrupted", e);
+                            Thread.currentThread().interrupt();
+                        }
                     }
                 }
+            } catch (IOException e) {
+                LOGGER.warn("Error while reading FFmpeg output", e);
             }
         }
     }
