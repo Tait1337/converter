@@ -11,22 +11,37 @@ These instructions will get you a copy of the project up and running on your loc
 
 ### Prerequisites
 
-No Prerequisites.
+Install Java JDK 16 or higher.
+
+```
+https://openjdk.java.net/install/index.html
+```
+
+Install Docker.
+```
+https://docs.docker.com/get-docker/
+```
 
 ### Installing
 
 Clone the Repository.
+
 ```
 git clone https://github.com/tait1337/converter.git
 ```
 
-Navigate to ./Index.html.
+Run the Web Application.
+```
+mvn spring-boot:run
+```
+
+Navigate to http://localhost:8080.
 
 ![Main Page](screenshot_index.png)
 
 ### Configuration
 
-No Configuration exist.
+Within [application.properties](src/main/resources/application.properties) you can modify settings.
 
 ## Running the tests
 
