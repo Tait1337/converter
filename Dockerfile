@@ -14,14 +14,15 @@ RUN apt-get update && apt-get install -y ffmpeg
 RUN apt-get update && apt-get install -y curl
 
 # install python
-RUN apt-get update && apt-get install -y python
+RUN apt-get update && apt-get install -y python-is-python3
 
 # install youtube-dl
 RUN curl -L https://yt-dl.org/downloads/latest/youtube-dl -o /usr/local/bin/youtube-dl && chmod a+rx /usr/local/bin/youtube-dl
 
 # install java
-RUN curl https://download.java.net/java/GA/jdk16/7863447f0ab643c585b9bdebf67c69db/36/GPL/openjdk-16_linux-x64_bin.tar.gz | tar xz -C /usr/local/bin/
-ENV JAVA_HOME=/usr/local/bin/jdk-16
+RUN curl -L https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.3%2B7/OpenJDK17U-jdk_x64_linux_hotspot_17.0.3_7.tar.gz | tar xz -C /usr/local/bin/
+RUN mv /usr/local/bin/jdk-17.* /usr/local/bin/jdk-17
+ENV JAVA_HOME=/usr/local/bin/jdk-17
 ENV PATH $JAVA_HOME/bin:$PATH
 
 # App

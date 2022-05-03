@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>2.4.4</version>
+		<version>2.6.7</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>de.clique.westwood</groupId>
@@ -14,7 +14,7 @@
 	<name>converter</name>
 
 	<properties>
-		<java.version>16</java.version>
+		<java.version>17</java.version>
 		<sonar.projectKey>Tait1337_converter</sonar.projectKey>
 		<sonar.organization>tait1337</sonar.organization>
 		<sonar.host.url>https://sonarcloud.io</sonar.host.url>
@@ -58,8 +58,9 @@
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
 				<configuration>
-					<source>16</source>
-					<target>16</target>
+					<source>19</source>
+					<target>19</target>
+					<compilerArgs>--enable-preview</compilerArgs>
 				</configuration>
 			</plugin>
 		</plugins>
