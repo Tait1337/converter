@@ -2,6 +2,7 @@ package de.clique.westwood.converter.service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.*;
@@ -22,8 +23,10 @@ public class ConverterService {
 
     private static final long TTL_IN_HOURS = 24;
     private static final String TMP_PATH = System.getProperty("java.io.tmpdir");
-    private static final String YOUTUBE_DL_PATH = "/usr/local/bin/youtube-dl";
-    private static final String FFMPEG_PATH = "/usr/bin/ffmpeg";
+    @Value("${youtubedl.path:/usr/local/bin/youtube-dl}")
+    private String youtubedlPath;
+    @Value("${ffmpeg.path:/usr/bin/ffmpeg}")
+    private String ffmpegPath;
     private static final Map<String, File> conversionQueue = new HashMap<>();
     private static final Map<String, String> conversionQueueStatus = new HashMap<>();
 
@@ -39,11 +42,14 @@ public class ConverterService {
         String ticket = UUID.randomUUID().toString();
         conversionQueue.put(ticket, null);
         conversionQueueStatus.put(ticket, "Please wait...");
-        String[] options = {YOUTUBE_DL_PATH, "--extract-audio", "--audio-format mp3", "--audio-quality 192k", "--add-metadata"};
+        String[] options = {youtubedlPath, "--extract-audio", "--audio-format mp3", "--audio-quality 192k", "--add-metadata"};
 
         new Thread(() -> {
             try {
                 convert(ticket, url, options);
+            } catch (InterruptedException e) {
+                LOGGER.error("Converter error.", e);
+                Thread.currentThread().interrupt();
             } catch (Exception e) {
                 LOGGER.error("Converter error.", e);
             }
@@ -62,11 +68,14 @@ public class ConverterService {
         String ticket = UUID.randomUUID().toString();
         conversionQueue.put(ticket, null);
         conversionQueueStatus.put(ticket, "Please wait...");
-        String[] options = {YOUTUBE_DL_PATH, "--recode-video", "mp4", "--add-metadata"};
+        String[] options = {youtubedlPath, "--recode-video", "mp4", "--add-metadata"};
 
         new Thread(() -> {
             try {
                 convert(ticket, url, options);
+            } catch (InterruptedException e) {
+                LOGGER.error("Converter error.", e);
+                Thread.currentThread().interrupt();
             } catch (Exception e) {
                 LOGGER.error("Converter error.", e);
             }
@@ -114,7 +123,7 @@ public class ConverterService {
 
         // start converting
         Path outputFile = Path.of(TMP_PATH + File.separatorChar + "%(title)s.%(ext)s");
-        String[] defaultOptions = {"--ffmpeg-location " + FFMPEG_PATH, "-o " + "\"" + outputFile + "\"", url.toString()};
+        String[] defaultOptions = {"--ffmpeg-location " + ffmpegPath, "-o " + "\"" + outputFile + "\"", url.toString()};
         String[] allOptions = new String[options.length + defaultOptions.length];
         System.arraycopy(options, 0, allOptions, 0, options.length);
         System.arraycopy(defaultOptions, 0, allOptions, options.length, defaultOptions.length);
@@ -157,7 +166,7 @@ public class ConverterService {
      * @see <a href="https://yt-dl.org/">Youtube-dl webpage</a>
      */
     private void updateYouTubeDownloader() throws IOException, InterruptedException {
-        Process process = runCmd("curl -L https://yt-dl.org/downloads/latest/youtube-dl -o " + YOUTUBE_DL_PATH + " && chmod a+rx " + YOUTUBE_DL_PATH);
+        Process process = runCmd("curl -L https://yt-dl.org/downloads/latest/youtube-dl -o " + youtubedlPath + " && chmod a+rx " + youtubedlPath);
         int exitCode = process.waitFor();
         if (exitCode != 0) {
             throw new InterruptedException("Error while updating youtube dl.");
